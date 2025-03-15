@@ -36,6 +36,7 @@ struct MainCommand: ParsableCommand {
     /// Main app entrypoint
     public func run() throws {
         // Print header strings
+        printSeparator()
         printTitle()
         printSubtitle()
 
@@ -46,23 +47,30 @@ struct MainCommand: ParsableCommand {
         }
 
         // Begin sorting all of the media files
-        var numberOfFilesSorted: Int = 0
+        var sortedResults: (photoCount: Int, videoCount: Int)
         do {
             let mediaSorter = MediaSorter()
-            numberOfFilesSorted = try mediaSorter.sort(from: source, to: destination)
+            sortedResults = try mediaSorter.sort(from: source, to: destination)
         } catch MediaSorterError.runtimeError(let message) {
             printError(message)
             return
         }
 
         // Print success message if no errors were thrown
-        printSuccess(numberOfFilesCopied: numberOfFilesSorted)
+        printSuccess(numberOfPhotos: sortedResults.photoCount, numberOfVideos: sortedResults.videoCount)
     }
 }
 
 // MARK: - String Formatting
 
 extension MainCommand {
+    private func printSeparator() {
+        let separator = Prism {
+            ForegroundColor(.red, String(repeating: "-", count: 80))
+        }
+        print(separator)
+    }
+
     private func printTitle() {
         let title = Prism {
             ForegroundColor(.green, "MediaSorter")
@@ -84,10 +92,10 @@ extension MainCommand {
         print(errorMessage)
     }
 
-    private func printSuccess(numberOfFilesCopied: Int) {
+    private func printSuccess(numberOfPhotos: Int, numberOfVideos: Int) {
         let successMessage = Prism {
             ForegroundColor(.green, "SUCCESS:")
-            "\(numberOfFilesCopied) files successfully copied."
+            "\(numberOfPhotos) photos and \(numberOfVideos) videos copied!"
         }
         print(successMessage)
     }

@@ -34,7 +34,7 @@ public class MediaSorter: @unchecked Sendable {
     // Shared reference to the system file manager
     let fileManager = FileManager.default
 
-    func sort(from sourcePath: String, to destinationPath: String) throws -> Int {
+    func sort(from sourcePath: String, to destinationPath: String) throws -> (photoCount: Int, videoCount: Int) {
         // Validate the source folder URL
         let sourceURL = URL(fileURLWithPath: absolutePath(sourcePath))
         guard isValidFolderURL(sourceURL) else {
@@ -57,32 +57,78 @@ public class MediaSorter: @unchecked Sendable {
         }
         operationQueue.waitUntilAllOperationsAreFinished()
 
-        return 0
+        return (photoCount: numberOfPhotos, videoCount: numberOfVideos)
     }
 
     private func sortMedia(at sourceURL: URL, to destionationURL: URL) {
         let fileName = sourceURL.lastPathComponent
         let sorter: MediaSortable? = {
-            if let photoSorter = PhotoSorter(url: sourceURL) {
+            if let videoSorter = VideoSorter(url: sourceURL) {
+                return videoSorter
+            }else if let photoSorter = PhotoSorter(url: sourceURL) {
                 return photoSorter
             }
             return nil
         }()
         guard let sorter else {
-            print("\(fileName): Not a valid media format")
+            print("\(fileName): Not a supported media file. Skipping.")
             return
         }
 
         let creationDate = sorter.creationDate
-        print("\(fileName): \(creationDate)")
-        print(dateComponentsURLfor(creationDate))
+        let creationDatePathComponents = dateComponentsPathfor(creationDate)
+        let finalDestionationURL = destionationURL.appendingPathComponent(creationDatePathComponents)
+        createDateComponentsDirectoriesIfNeeded(url: finalDestionationURL)
+
+        let uuid = sorter.uuid
+        let finalFileName = finalFileName(for: sourceURL, creationDate: creationDate, uuid: uuid)
+        let previewURLString = creationDatePathComponents + "/" + finalFileName
+
+        var success = false
+        do {
+            try fileManager.moveItem(at: sourceURL, to: finalDestionationURL.appendingPathComponent(finalFileName))
+            success = true
+            print("\(fileName):\tMoved to \(previewURLString)")
+        } catch (let error) {
+            if (error as NSError).code == NSFileWriteFileExistsError {
+                print("\(fileName):\tMove failed. File already exists: \(previewURLString)")
+            } else {
+                print("\(fileName):\tMove failed. \(error.localizedDescription)")
+            }
+        }
+
+        if success {
+            os_unfair_lock_lock(&mediaCountLock)
+            if sorter.mediaType == .photo {
+                numberOfPhotos += 1
+            } else {
+                numberOfVideos += 1
+            }
+            os_unfair_lock_unlock(&mediaCountLock)
+        }
     }
 
-    private func dateComponentsURLfor(_ date: Date) -> String {
+    private func dateComponentsPathfor(_ date: Date) -> String {
         let components = Calendar.current.dateComponents([.year, .month, .day], from: date)
         return String(format: "%04d", components.year ?? 0) + "/" +
-                String(format: "%02d", components.month ?? 0) + "/" +
-                String(format: "%02d", components.day ?? 0)
+                String(format: "%02d", components.month ?? 0)
+    }
+
+    private func finalFileName(for url: URL, creationDate: Date, uuid: String) -> String {
+        let components = Calendar.current.dateComponents([.year, .month, .day], from: creationDate)
+        let fileExtension = url.pathExtension.lowercased()
+        return String(format: "%04d", components.year ?? 0) + "-" +
+        String(format: "%02d", components.month ?? 0) + "-" +
+        String(format: "%02d", components.day ?? 0) + "-" +
+        uuid + ".\(fileExtension)"
+
+    }
+
+    private func createDateComponentsDirectoriesIfNeeded(url: URL) {
+        guard !fileManager.fileExists(atPath: url.path) else { return }
+        os_unfair_lock_lock(&folderLock)
+        try? fileManager.createDirectory(at: url, withIntermediateDirectories: true)
+        os_unfair_lock_unlock(&folderLock)
     }
 }
 

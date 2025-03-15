@@ -21,10 +21,6 @@ struct PhotoSorter: MediaSortable {
         self.imageSource = imageSource
     }
 
-    var uuid: String? {
-        nil
-    }
-
     var mediaType: MediaType {
         .photo
     }
@@ -49,9 +45,27 @@ extension PhotoSorter {
             let formatter = DateFormatter()
             formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
             formatter.timeZone = TimeZone(identifier: "UTC")
-
             return formatter.date(from: dateString)
         }
         return nil
+    }
+}
+
+extension PhotoSorter {
+    var uuid: String {
+        if let livePhotoUUID = getLivePhotoUUID() {
+            return livePhotoUUID
+        } else if let fileUUID = getFileHashAsUUID() {
+            return fileUUID
+        }
+        return "00000000-0000-0000-0000-000000000000"
+    }
+
+    private func getLivePhotoUUID() -> String? {
+        guard let metadata = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as? [CFString: Any],
+              let appleMetadata = metadata[kCGImagePropertyMakerAppleDictionary] as? [AnyHashable: Any] else {
+            return nil
+        }
+        return appleMetadata["17"] as? String
     }
 }
