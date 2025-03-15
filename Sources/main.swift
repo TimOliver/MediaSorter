@@ -12,15 +12,53 @@
 // For more information, see <https://unlicense.org/>.
 
 import Foundation
+import Prism
 import ArgumentParser
 
-struct PhotoParser2: ParsableCommand {
-    @Option var source: String? = nil
-    @Option var destination: String? = nil
+/// A small command-line utility to take a folder containing completely unsorted
+/// and arbitrarily name photos and videos (eg, from the Photos app) and to sort
+/// them into a new folder structure based on the date taken.
+/// The new naming scheme aims to be reliably reproducible, so if this command is
+/// run on two folders containing identical files, these can be detected and merged.
+struct PhotoSorter: ParsableCommand {
 
+    /// The source folder of unsorted photos/videos
+    @Option(name: .shortAndLong, help: "The path to the source folder containing unsorted photos/videos.")
+    var source: String? = nil
+
+    /// The destination folder. Will be created if it doesn't exist
+    @Option(name: .shortAndLong, help: "The path to the destination folder where the sorted photos/videos will be moved.")
+    var destination: String? = nil
+
+    /// The current version of this package.
+    public var version = "1.0.0"
+
+    /// Main app entrypoint
     public func run() throws {
-        
+        printTitle()
+        printSubtitle()
+        guard let source, let destination else {
+            print(PhotoSorter.helpMessage())
+            return
+        }
     }
 }
 
-PhotoParser2.main()
+// MARK: - String Formatting
+
+extension PhotoSorter {
+    private func printTitle() {
+        print(Prism {
+            ForegroundColor(.green, "PhotoSorter2")
+            "-"
+            version
+        })
+    }
+
+    private func printSubtitle() {
+        print("A lightweight tool for relibaly sorting a folder of unsorted folders into a new folder sorted by date.\n")
+    }
+}
+
+// Run the utility
+PhotoSorter.main()
