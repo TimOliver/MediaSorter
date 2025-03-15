@@ -108,15 +108,21 @@ public class MediaSorter: @unchecked Sendable {
         }
     }
 
-    private func dateComponentsPathfor(_ date: Date) -> String {
+    private func dateComponentsPathfor(_ date: Date?) -> String {
+        guard let date else {
+            return "Unsorted"
+        }
         let components = Calendar.current.dateComponents([.year, .month, .day], from: date)
         return String(format: "%04d", components.year ?? 0) + "/" +
                 String(format: "%02d", components.month ?? 0)
     }
 
-    private func finalFileName(for url: URL, creationDate: Date, uuid: String) -> String {
-        let components = Calendar.current.dateComponents([.year, .month, .day], from: creationDate)
+    private func finalFileName(for url: URL, creationDate: Date?, uuid: String) -> String {
         let fileExtension = url.pathExtension.lowercased()
+        guard let creationDate else {
+            return uuid + ".\(fileExtension)"
+        }
+        let components = Calendar.current.dateComponents([.year, .month, .day], from: creationDate)
         return String(format: "%04d", components.year ?? 0) + "-" +
         String(format: "%02d", components.month ?? 0) + "-" +
         String(format: "%02d", components.day ?? 0) + "-" +

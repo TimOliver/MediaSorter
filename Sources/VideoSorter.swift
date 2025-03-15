@@ -28,18 +28,15 @@ struct VideoSorter: MediaSortable {
 
 extension VideoSorter {
 
-    public var creationDate: Date {
+    public var creationDate: Date? {
         if let exifDateTaken = getVideoDateTaken() {
             return exifDateTaken
-        } else if let creationDate = getFileCreationDate() {
-            return creationDate
         }
-        return Date()
+        return nil
     }
 
     private func getVideoDateTaken() -> Date? {
         let metadata = asset.metadata(forFormat: .quickTimeMetadata)
-
         var creationDateString: String?
         for item in metadata {
             if let commonKey = item.commonKey {
@@ -56,10 +53,16 @@ extension VideoSorter {
         }
         guard let creationDateString else { return nil }
 
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
-        formatter.timeZone = TimeZone(identifier: "UTC")
-        return formatter.date(from: creationDateString)
+        let datePattern = /([0-9]+)[-:]([0-9]+)[-:]([0-9]+)/
+        guard let match = creationDateString.firstMatch(of: datePattern) else {
+            return nil
+        }
+
+        var components = DateComponents()
+        components.year = Int(match.1)
+        components.month = Int(match.2)
+        components.day = Int(match.3)
+        return Calendar.current.date(from: components)
     }
 }
 

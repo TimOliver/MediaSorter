@@ -28,13 +28,11 @@ struct PhotoSorter: MediaSortable {
 
 extension PhotoSorter {
 
-    public var creationDate: Date {
+    public var creationDate: Date? {
         if let exifDateTaken = getPhotoDateTaken() {
             return exifDateTaken
-        } else if let creationDate = getFileCreationDate() {
-            return creationDate
         }
-        return Date()
+        return nil
     }
 
     private func getPhotoDateTaken() -> Date? {

@@ -19,7 +19,7 @@ public protocol MediaSortable: Any {
     var url: URL { get }
 
     /// The date this media was created (ie, when a photo was taken)
-    var creationDate: Date { get }
+    var creationDate: Date? { get }
 
     /// A unique ID for this media. If the media has a Live Photos ID embedded
     /// in it, this should be used. Specify nil to generate a hash off the file instead.
