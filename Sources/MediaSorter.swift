@@ -14,10 +14,22 @@ enum MediaSorterError: Error {
 
 /// The main class that sorts through all of the files in a source
 /// folder, and sorts each one into a shared destination folder
-public struct MediaSorter {
+public class MediaSorter: @unchecked Sendable {
 
-    // Share state for tracking the number of files processed
-    let state = MediaSorterState()
+    // Track the number of medias processed
+    private var mediaCountLock = os_unfair_lock()
+    private var numberOfPhotos = 0
+    private var numberOfVideos = 0
+
+    // Track making new folders
+    private var folderLock = os_unfair_lock()
+
+    // An operation queue to process each media concurrently
+    private var operationQueue: OperationQueue = {
+        let queue = OperationQueue()
+        queue.maxConcurrentOperationCount = ProcessInfo.processInfo.activeProcessorCount
+        return queue
+    }()
 
     // Shared reference to the system file manager
     let fileManager = FileManager.default
@@ -35,7 +47,42 @@ public struct MediaSorter {
             throw MediaSorterError.runtimeError("Destination file path must point to a valid folder on disk.")
         }
 
+        // Sort through every file in this folder
+        for fileURL in try fileManager.contentsOfDirectory(at: sourceURL, includingPropertiesForKeys: nil, options: []) {
+            //Skip hidden files
+            guard !fileURL.lastPathComponent.hasPrefix(".") else { continue }
+            operationQueue.addOperation { [weak self] in
+                self?.sortMedia(at: fileURL, to: destinationURL)
+            }
+        }
+        operationQueue.waitUntilAllOperationsAreFinished()
+
         return 0
+    }
+
+    private func sortMedia(at sourceURL: URL, to destionationURL: URL) {
+        let fileName = sourceURL.lastPathComponent
+        let sorter: MediaSortable? = {
+            if let photoSorter = PhotoSorter(url: sourceURL) {
+                return photoSorter
+            }
+            return nil
+        }()
+        guard let sorter else {
+            print("\(fileName): Not a valid media format")
+            return
+        }
+
+        let creationDate = sorter.creationDate
+        print("\(fileName): \(creationDate)")
+        print(dateComponentsURLfor(creationDate))
+    }
+
+    private func dateComponentsURLfor(_ date: Date) -> String {
+        let components = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d", components.year ?? 0) + "/" +
+                String(format: "%02d", components.month ?? 0) + "/" +
+                String(format: "%02d", components.day ?? 0)
     }
 }
 
