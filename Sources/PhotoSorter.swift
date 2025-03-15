@@ -28,22 +28,31 @@ struct PhotoSorter: MediaSortable {
 
 extension PhotoSorter {
 
-    public var creationDate: Date? {
+    public var creationDate: DateComponents? {
         if let exifDateTaken = getPhotoDateTaken() {
             return exifDateTaken
         }
         return nil
     }
 
-    private func getPhotoDateTaken() -> Date? {
+    private func getPhotoDateTaken() -> DateComponents? {
         if let metadata = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as? [CFString: Any],
            let exif = metadata[kCGImagePropertyExifDictionary] as? [CFString: Any],
            let dateString = exif[kCGImagePropertyExifDateTimeOriginal] as? String {
 
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
-            formatter.timeZone = TimeZone(identifier: "UTC")
-            return formatter.date(from: dateString)
+            let datePattern = /([0-9]+)[-:]([0-9]+)[-:]([0-9]+)[T\s]([0-9]+)[-:]([0-9]+)[-:]([0-9]+)/
+            guard let match = dateString.firstMatch(of: datePattern) else {
+                return nil
+            }
+
+            var components = DateComponents()
+            components.year = Int(match.1)
+            components.month = Int(match.2)
+            components.day = Int(match.3)
+            components.hour = Int(match.4)
+            components.minute = Int(match.5)
+            components.second = Int(match.6)
+            return components
         }
         return nil
     }

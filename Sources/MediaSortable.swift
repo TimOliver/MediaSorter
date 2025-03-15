@@ -19,7 +19,7 @@ public protocol MediaSortable: Any {
     var url: URL { get }
 
     /// The date this media was created (ie, when a photo was taken)
-    var creationDate: Date? { get }
+    var creationDate: DateComponents? { get }
 
     /// A unique ID for this media. If the media has a Live Photos ID embedded
     /// in it, this should be used. Specify nil to generate a hash off the file instead.
@@ -30,10 +30,6 @@ public protocol MediaSortable: Any {
 }
 
 extension MediaSortable {
-    func getFileCreationDate() -> Date? {
-        let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
-        return attributes?[.creationDate] as? Date
-    }
 
     func getFileHashAsUUID() -> String? {
         guard let fileStream = InputStream(url: url) else {

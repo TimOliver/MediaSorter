@@ -65,7 +65,7 @@ public class MediaSorter: @unchecked Sendable {
         let sorter: MediaSortable? = {
             if let videoSorter = VideoSorter(url: sourceURL) {
                 return videoSorter
-            }else if let photoSorter = PhotoSorter(url: sourceURL) {
+            } else if let photoSorter = PhotoSorter(url: sourceURL) {
                 return photoSorter
             }
             return nil
@@ -108,24 +108,25 @@ public class MediaSorter: @unchecked Sendable {
         }
     }
 
-    private func dateComponentsPathfor(_ date: Date?) -> String {
-        guard let date else {
+    private func dateComponentsPathfor(_ components: DateComponents?) -> String {
+        guard let components else {
             return "Unsorted"
         }
-        let components = Calendar.current.dateComponents([.year, .month, .day], from: date)
         return String(format: "%04d", components.year ?? 0) + "/" +
                 String(format: "%02d", components.month ?? 0)
     }
 
-    private func finalFileName(for url: URL, creationDate: Date?, uuid: String) -> String {
+    private func finalFileName(for url: URL, creationDate: DateComponents?, uuid: String) -> String {
         let fileExtension = url.pathExtension.lowercased()
-        guard let creationDate else {
+        guard let components = creationDate else {
             return url.lastPathComponent
         }
-        let components = Calendar.current.dateComponents([.year, .month, .day], from: creationDate)
         return String(format: "%04d", components.year ?? 0) + "-" +
         String(format: "%02d", components.month ?? 0) + "-" +
         String(format: "%02d", components.day ?? 0) + "-" +
+        String(format: "%02d", components.hour ?? 0) + "-" +
+        String(format: "%02d", components.minute ?? 0) + "-" +
+        String(format: "%02d", components.second ?? 0) + "-" +
         uuid + ".\(fileExtension)"
 
     }
