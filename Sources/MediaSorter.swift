@@ -120,7 +120,7 @@ public class MediaSorter: @unchecked Sendable {
     private func finalFileName(for url: URL, creationDate: Date?, uuid: String) -> String {
         let fileExtension = url.pathExtension.lowercased()
         guard let creationDate else {
-            return uuid + ".\(fileExtension)"
+            return url.lastPathComponent
         }
         let components = Calendar.current.dateComponents([.year, .month, .day], from: creationDate)
         return String(format: "%04d", components.year ?? 0) + "-" +
