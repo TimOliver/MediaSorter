@@ -11,4 +11,16 @@
 //
 // For more information, see <https://unlicense.org/>.
 
+import Foundation
+import ArgumentParser
 
+struct PhotoParser2: ParsableCommand {
+    @Option var source: String? = nil
+    @Option var destination: String? = nil
+
+    public func run() throws {
+        
+    }
+}
+
+PhotoParser2.main()
