@@ -35,12 +35,28 @@ struct MainCommand: ParsableCommand {
 
     /// Main app entrypoint
     public func run() throws {
+        // Print header strings
         printTitle()
         printSubtitle()
+
+        // Verify source and destination paths were provided
         guard let source, let destination else {
             print(MainCommand.helpMessage())
             return
         }
+
+        // Begin sorting all of the media files
+        var numberOfFilesSorted: Int = 0
+        do {
+            let mediaSorter = MediaSorter()
+            numberOfFilesSorted = try mediaSorter.sort(from: source, to: destination)
+        } catch MediaSorterError.runtimeError(let message) {
+            printError(message)
+            return
+        }
+
+        // Print success message if no errors were thrown
+        printSuccess(numberOfFilesCopied: numberOfFilesSorted)
     }
 }
 
@@ -48,15 +64,32 @@ struct MainCommand: ParsableCommand {
 
 extension MainCommand {
     private func printTitle() {
-        print(Prism {
-            ForegroundColor(.green, "PhotoSorter2")
+        let title = Prism {
+            ForegroundColor(.green, "MediaSorter")
             "-"
             version
-        })
+        }
+        print(title)
     }
 
     private func printSubtitle() {
         print("A lightweight tool for relibaly sorting a folder of unsorted folders into a new folder sorted by date.\n")
+    }
+
+    private func printError(_ message: String) {
+        let errorMessage = Prism {
+            ForegroundColor(.red, "ERROR:")
+            message
+        }
+        print(errorMessage)
+    }
+
+    private func printSuccess(numberOfFilesCopied: Int) {
+        let successMessage = Prism {
+            ForegroundColor(.green, "SUCCESS:")
+            "\(numberOfFilesCopied) files successfully copied."
+        }
+        print(successMessage)
     }
 }
 
