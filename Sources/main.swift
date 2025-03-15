@@ -20,7 +20,7 @@ import ArgumentParser
 /// them into a new folder structure based on the date taken.
 /// The new naming scheme aims to be reliably reproducible, so if this command is
 /// run on two folders containing identical files, these can be detected and merged.
-struct PhotoSorter: ParsableCommand {
+struct MainCommand: ParsableCommand {
 
     /// The source folder of unsorted photos/videos
     @Option(name: .shortAndLong, help: "The path to the source folder containing unsorted photos/videos.")
@@ -38,7 +38,7 @@ struct PhotoSorter: ParsableCommand {
         printTitle()
         printSubtitle()
         guard let source, let destination else {
-            print(PhotoSorter.helpMessage())
+            print(MainCommand.helpMessage())
             return
         }
     }
@@ -46,7 +46,7 @@ struct PhotoSorter: ParsableCommand {
 
 // MARK: - String Formatting
 
-extension PhotoSorter {
+extension MainCommand {
     private func printTitle() {
         print(Prism {
             ForegroundColor(.green, "PhotoSorter2")
@@ -61,4 +61,4 @@ extension PhotoSorter {
 }
 
 // Run the utility
-PhotoSorter.main()
+MainCommand.main()
