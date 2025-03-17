@@ -14,6 +14,14 @@ Photos and videos that were captured together as Live Photos are also kept toget
 2. From the command line, navigate to the downloaded folder.
 3. Run `swift run MediaSorter -s /path/to/unsorted/photos/folder -d /path/to/sorted/photos/folder`
 
+# Rationale
+
+I originally wrote [my first photo sorting utility](https://github.com/TimOliver/PhotoSorter) back in 2018, back when Swift 4 was brand new. I was still an absolute n00b at Swift back then (I might still be a n00b now!) and it shows in that library. 
+
+I decided to do a complete rewrite here to see how I would solve the same problem again. The biggest problem with the older utility was that it didn't reliably keep Live Photo photos and videos together; it simply relied on them having the same file names. This time around, I found [an amazing blog post](https://www.limit-point.com/blog/2018/live-photos/) that documented how Live Photos have an embedded ID in them, and used that as the basis for renaming all of these files in a reproducible way.
+
+I'm always open to feedback! Please let me know what you think of this code, and if you have any suggestions, let me know. Thanks!
+
 # License
 
 This code is released under The Unlicense. It is free and unencumbered software released into the public domain.
