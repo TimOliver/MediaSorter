@@ -144,9 +144,16 @@ public class MediaSorter: @unchecked Sendable {
     ///   - uuid: A uniquie UUID for this file. Either its embedded Live Photos UUID, or a hash from its contents
     /// - Returns: The finalized name (eg, YY-mm-dd-hh-mm-ss-uuid), or it's original name if the creation date is nil
     private func finalFileName(for url: URL, creationDate: DateComponents?, uuid: String) -> String {
-        let fileExtension = url.pathExtension.lowercased()
+        // Rename JPEG files to JPG files
+        var formattedURL = url
+        if formattedURL.pathExtension.lowercased() == "jpeg" {
+            formattedURL = formattedURL.deletingPathExtension()
+            formattedURL = formattedURL.appendingPathExtension("jpg")
+        }
+        let fileExtension = formattedURL.pathExtension
+
         guard let components = creationDate else {
-            return url.lastPathComponent
+            return formattedURL.lastPathComponent
         }
         return String(format: "%04d", components.year ?? 0) + "-" +
         String(format: "%02d", components.month ?? 0) + "-" +
