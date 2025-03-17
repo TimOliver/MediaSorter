@@ -18,4 +18,4 @@ Photos and videos that were captured together as Live Photos are also kept toget
 
 This code is released under The Unlicense. It is free and unencumbered software released into the public domain.
 
-Please see [LICENSE] for more information.
+Please see [LICENSE](LICENSE) for more information.
