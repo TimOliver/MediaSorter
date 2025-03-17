@@ -1,9 +1,15 @@
 //
-//  File.swift
-//  MediaSorter
+// MediaSortable.swift
+// By Tim Oliver
 //
-//  Created by Tim Oliver on 15/3/2025.
+// This is free and unencumbered software released into the public domain.
 //
+// Anyone is free to copy, modify, publish, use, compile, sell, or
+// distribute this software, either in source code form or as a compiled
+// binary, for any purpose, commercial or non-commercial, and by any
+// means.
+//
+// For more information, see <https://unlicense.org/>.
 
 import Foundation
 import CryptoKit
@@ -29,20 +35,22 @@ public protocol MediaSortable: Any {
     var mediaType: MediaType { get }
 }
 
+/// Common logic shared between photos and videos
 extension MediaSortable {
 
-    func getFileHashAsUUID() -> String? {
+    /// Generate a SHA256 hash of this file, which is then returned as a standard UUID string
+    /// - Returns: The UUID string of the
+    func fileHashAsUUID() -> String? {
         guard let fileStream = InputStream(url: url) else {
             print("Failed to open file")
             return nil
         }
 
-        fileStream.open()
-
         var hasher = SHA256()
         let bufferSize = 1024 * 512 // 512 KB buffer
         var buffer = [UInt8](repeating: 0, count: bufferSize)
 
+        fileStream.open()
         while fileStream.hasBytesAvailable {
             let bytesRead = fileStream.read(&buffer, maxLength: bufferSize)
             if bytesRead > 0 {
@@ -51,7 +59,6 @@ extension MediaSortable {
                 break
             }
         }
-
         fileStream.close()
 
         // Get the final hash
@@ -60,5 +67,25 @@ extension MediaSortable {
         // Convert the first 16 bytes to a UUID
         let uuid = digest.withUnsafeBytes { UUID(uuid: $0.load(as: uuid_t.self)) }
         return uuid.uuidString
+    }
+
+    /// Takes a date string from a file's metadata, parses it and returns it as a DateComponents object
+    /// - Parameter dateString: The datestring in ISO 8601 (eg yyyy-mm-ddThh:mm:ss)
+    /// - Returns: Date components object representing the passed string
+    @available(macOS 13.0, *)
+    func dateComponents(from dateString: String) -> DateComponents? {
+        let datePattern = /([0-9]+)[-:]([0-9]+)[-:]([0-9]+)[T\s]([0-9]+)[-:]([0-9]+)[-:]([0-9]+)/
+        guard let match = dateString.firstMatch(of: datePattern) else {
+            return nil
+        }
+
+        var components = DateComponents()
+        components.year = Int(match.1)
+        components.month = Int(match.2)
+        components.day = Int(match.3)
+        components.hour = Int(match.4)
+        components.minute = Int(match.5)
+        components.second = Int(match.6)
+        return components
     }
 }

@@ -1,18 +1,32 @@
 //
-//  File.swift
-//  MediaSorter
+// PhotoSorter.swift
+// By Tim Oliver
 //
-//  Created by Tim Oliver on 15/3/2025.
+// This is free and unencumbered software released into the public domain.
 //
+// Anyone is free to copy, modify, publish, use, compile, sell, or
+// distribute this software, either in source code form or as a compiled
+// binary, for any purpose, commercial or non-commercial, and by any
+// means.
+//
+// For more information, see <https://unlicense.org/>.
 
 import Foundation
 import ImageIO
 
+/// A struct representing a single photo file on disk, powered by the ImageIO framework.
+/// Supports all of ImageIO's media formats (jpeg, gif, png, heic etc)
 struct PhotoSorter: MediaSortable {
 
+    // The file URL pointing to this file
     public let url: URL
+
+    // The ImageIO source reference pointing to this image
     private let imageSource: CGImageSource
 
+    /// Create a new instance of `PhotoSorter` with the provided URL.
+    /// Returns nil if the provided file's image format isn't supported.
+    /// - Parameter url: The file URL to an image on disk.
     init?(url: URL) {
         guard let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil) else {
             return nil
@@ -21,13 +35,17 @@ struct PhotoSorter: MediaSortable {
         self.imageSource = imageSource
     }
 
+    /// Identify this media as an image file
     var mediaType: MediaType {
         .photo
     }
 }
 
+// MARK: - Creation Date
+
 extension PhotoSorter {
 
+    /// Determine the time this photo was taken from its metadata
     public var creationDate: DateComponents? {
         if let exifDateTaken = getPhotoDateTaken() {
             return exifDateTaken
@@ -35,39 +53,41 @@ extension PhotoSorter {
         return nil
     }
 
+
+    /// Fetch the creation date of this photo from the EXIF metadata
+    /// - Returns: The creation date as date components if found, nil otherwise
     private func getPhotoDateTaken() -> DateComponents? {
-        if let metadata = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as? [CFString: Any],
+        guard let metadata = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as? [CFString: Any],
            let exif = metadata[kCGImagePropertyExifDictionary] as? [CFString: Any],
-           let dateString = exif[kCGImagePropertyExifDateTimeOriginal] as? String {
-
-            let datePattern = /([0-9]+)[-:]([0-9]+)[-:]([0-9]+)[T\s]([0-9]+)[-:]([0-9]+)[-:]([0-9]+)/
-            guard let match = dateString.firstMatch(of: datePattern) else {
-                return nil
-            }
-
-            var components = DateComponents()
-            components.year = Int(match.1)
-            components.month = Int(match.2)
-            components.day = Int(match.3)
-            components.hour = Int(match.4)
-            components.minute = Int(match.5)
-            components.second = Int(match.6)
-            return components
+              let dateString = exif[kCGImagePropertyExifDateTimeOriginal] as? String else {
+            return nil
         }
+
+        if #available(macOS 13.0, *) {
+            return dateComponents(from: dateString)
+        }
+
         return nil
     }
 }
 
+// MARK: - File UUID
+
 extension PhotoSorter {
+
+    /// Fetch the Live Photos UUID first, and if that fails,
+    /// generate a UUID based off a SHA256 hash of the file.
     var uuid: String {
         if let livePhotoUUID = getLivePhotoUUID() {
             return livePhotoUUID
-        } else if let fileUUID = getFileHashAsUUID() {
+        } else if let fileUUID = fileHashAsUUID() {
             return fileUUID
         }
         return "00000000-0000-0000-0000-000000000000"
     }
 
+    /// Fetch the Live Photos UUID from the image file
+    /// - Returns: The UUID string if found, nil otherwise
     private func getLivePhotoUUID() -> String? {
         guard let metadata = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as? [CFString: Any],
               let appleMetadata = metadata[kCGImagePropertyMakerAppleDictionary] as? [AnyHashable: Any] else {

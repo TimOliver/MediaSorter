@@ -1,5 +1,5 @@
 //
-// PhotoSorter2
+// MediaSorter
 // By Tim Oliver
 //
 // This is free and unencumbered software released into the public domain.
@@ -61,7 +61,7 @@ struct MainCommand: ParsableCommand {
     }
 }
 
-// MARK: - String Formatting
+// MARK: - Formatted Messages
 
 extension MainCommand {
     private func printSeparator() {
