@@ -16,7 +16,7 @@ Photos and videos that were captured together as Live Photos are also kept toget
 
 # Rationale
 
-I originally wrote [my first photo sorting utility](https://github.com/TimOliver/PhotoSorter) back in 2018, back when Swift 4 was brand new. I was still an absolute n00b at Swift back then (I might still be a n00b now!) and it shows in that library. 
+I originally wrote [my first photo sorting utility](https://github.com/TimOliver/PhotoSorter) back in 2018, back when Swift 4 was brand new. I was still an absolute n00b at Swift back then (I might still be a n00b now!) and I pretty quickly cobbled that old codebase together very haphazardly.
 
 I decided to do a complete rewrite here to see how I would solve the same problem again. The biggest problem with the older utility was that it didn't reliably keep Live Photo photos and videos together; it simply relied on them having the same file names. This time around, I found [an amazing blog post](https://www.limit-point.com/blog/2018/live-photos/) that documented how Live Photos have an embedded ID in them, and used that as the basis for renaming all of these files in a reproducible way.
 
