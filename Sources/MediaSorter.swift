@@ -64,8 +64,13 @@ public class MediaSorter: @unchecked Sendable {
             throw MediaSorterError.runtimeError("Destination file path must point to a valid folder on disk.")
         }
 
-        // Sort through every file in this folder
-        for fileURL in try fileManager.contentsOfDirectory(at: sourceURL, includingPropertiesForKeys: nil, options: []) {
+        // Fetch the list of files we'll be sorting
+        guard let filesToSort = fetchFilesToSort(from: sourceURL) else {
+            throw MediaSorterError.runtimeError("Unable to load files list from disk.")
+        }
+
+        // Begin looping through each one, and parsing it
+        for fileURL in filesToSort {
             //Skip hidden files
             guard !fileURL.lastPathComponent.hasPrefix(".") else { continue }
             operationQueue.addOperation { [weak self] in
@@ -179,6 +184,29 @@ public class MediaSorter: @unchecked Sendable {
         try? fileManager.createDirectory(at: url, withIntermediateDirectories: true)
         os_unfair_lock_unlock(&folderLock)
     }
+
+    /// If the provided URL points to a folder, we'll add it to the list and then continue
+    private func fetchFilesToSort(from url: URL) -> [URL]? {
+        guard var fileList = try? fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: nil, options: []) else { return nil }
+
+        // Loop through every sub folder and collect every file that we can
+        var filteredFileList = [URL]()
+        while !fileList.isEmpty {
+            guard let file = fileList.first else { continue }
+            fileList.removeFirst()
+
+            if !isDirectory(file) {
+                filteredFileList.append(file)
+                continue
+            }
+
+            if let subfiles = try? fileManager.contentsOfDirectory(at: file, includingPropertiesForKeys: nil, options: []) {
+                    fileList += subfiles
+            }
+        }
+
+        return filteredFileList
+    }
 }
 
 // MARK: - Convenience Helpers
@@ -208,8 +236,7 @@ extension MediaSorter {
         }
 
         // Check if the provided URL is a valid folder on disk already
-        var isFolder: ObjCBool = false
-        if fileManager.fileExists(atPath: url.path, isDirectory: &isFolder), isFolder.boolValue {
+        if isDirectory(url) {
             return true
         }
 
@@ -225,5 +252,11 @@ extension MediaSorter {
         } catch {}
 
         return false
+    }
+
+    /// Checks if the provided URL points to a directory
+    public func isDirectory(_ url: URL) -> Bool {
+        var isFolder: ObjCBool = false
+        return fileManager.fileExists(atPath: url.path, isDirectory: &isFolder) && isFolder.boolValue
     }
 }
