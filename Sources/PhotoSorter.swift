@@ -21,18 +21,22 @@ struct PhotoSorter: MediaSortable {
     // The file URL pointing to this file
     public let url: URL
 
+    // Use the file creation date
+    public var useFileCreationDate: Bool = false
+
     // The ImageIO source reference pointing to this image
     private let imageSource: CGImageSource
 
     /// Create a new instance of `PhotoSorter` with the provided URL.
     /// Returns nil if the provided file's image format isn't supported.
     /// - Parameter url: The file URL to an image on disk.
-    init?(url: URL) {
+    init?(url: URL, useFileCreationDate: Bool = false) {
         guard let imageSource = CGImageSourceCreateWithURL(url as CFURL, nil) else {
             return nil
         }
         self.url = url
         self.imageSource = imageSource
+        self.useFileCreationDate = useFileCreationDate
     }
 
     /// Identify this media as an image file
@@ -49,10 +53,11 @@ extension PhotoSorter {
     public var creationDate: DateComponents? {
         if let exifDateTaken = getPhotoDateTaken() {
             return exifDateTaken
+        } else if useFileCreationDate, let creationDate = fileCreationDate() {
+            return creationDate
         }
         return nil
     }
-
 
     /// Fetch the creation date of this photo from the EXIF metadata
     /// - Returns: The creation date as date components if found, nil otherwise

@@ -24,6 +24,9 @@ public protocol MediaSortable: Any {
     /// The URL of the file
     var url: URL { get }
 
+    /// Whether to use the file creation date or not
+    var useFileCreationDate: Bool { get }
+
     /// The date this media was created (ie, when a photo was taken)
     var creationDate: DateComponents? { get }
 
@@ -37,6 +40,23 @@ public protocol MediaSortable: Any {
 
 /// Common logic shared between photos and videos
 extension MediaSortable {
+
+    /// Get the file's creation date as date components
+    func fileCreationDate() -> DateComponents? {
+        let fileManager = FileManager.default
+
+        // Get file attributes
+        let attributes = try? fileManager.attributesOfItem(atPath: url.path)
+
+        // Extract creation date
+        guard let attributes, let creationDate = attributes[.creationDate] as? Date else {
+            return nil
+        }
+
+        // Convert Date to DateComponents
+        let calendar = Calendar.current
+        return calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: creationDate)
+    }
 
     /// Generate a SHA256 hash of this file, which is then returned as a standard UUID string
     /// - Returns: The UUID string of the

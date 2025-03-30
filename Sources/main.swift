@@ -30,6 +30,10 @@ struct MainCommand: ParsableCommand {
     @Option(name: .shortAndLong, help: "The path to the destination folder where the sorted photos/videos will be moved.")
     var destination: String? = nil
 
+    /// If the date isn't in the EXIF data, use the file's creation date instead (Default is false)
+    @Flag(name: .shortAndLong, help: "If the EXIF date isn't available, use the file creation date instead.")
+    var useFileCreationDate: Bool = false
+
     /// The current version of this package.
     public var version = "1.0.0"
 
@@ -50,6 +54,7 @@ struct MainCommand: ParsableCommand {
         var sortedResults: (photoCount: Int, videoCount: Int)
         do {
             let mediaSorter = MediaSorter()
+            mediaSorter.useFileCreationDate = useFileCreationDate
             sortedResults = try mediaSorter.sort(from: source, to: destination)
         } catch MediaSorterError.runtimeError(let message) {
             printError(message)

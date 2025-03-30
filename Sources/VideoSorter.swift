@@ -21,18 +21,22 @@ struct VideoSorter: MediaSortable {
     // The file URL pointing to this file
     public let url: URL
 
+    // Use the file creation date
+    public var useFileCreationDate: Bool = false
+
     // The AVAsset object backing this file
     private let asset: AVURLAsset
 
     /// Create a new instance of `VideoSorter` with the provided URL.
     /// Returns nil if the provided file's media format isn't supported.
     /// - Parameter url: The file URL to an image on disk.
-    init?(url: URL) {
+    init?(url: URL, useFileCreationDate: Bool = false) {
         let asset = AVURLAsset(url: url)
         guard !asset.tracks.isEmpty else { return nil }
 
         self.url = url
         self.asset = asset
+        self.useFileCreationDate = useFileCreationDate
     }
 
     /// Identify this media as a video file
@@ -49,6 +53,8 @@ extension VideoSorter {
     public var creationDate: DateComponents? {
         if let exifDateTaken = getVideoDateTaken() {
             return exifDateTaken
+        } else if useFileCreationDate, let creationDate = fileCreationDate() {
+            return creationDate
         }
         return nil
     }

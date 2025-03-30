@@ -23,6 +23,9 @@ enum MediaSorterError: Error {
 /// Makes use of every physical core of the host machine for maximum efficiency.
 public class MediaSorter: @unchecked Sendable {
 
+    // Use the file creation date if the EXIF data doesn't contain it
+    public var useFileCreationDate: Bool = false
+
     // Track the number of medias processed
     private var mediaCountLock = os_unfair_lock()
     private var numberOfPhotos = 0
@@ -81,9 +84,11 @@ public class MediaSorter: @unchecked Sendable {
     private func sortMedia(at sourceURL: URL, to destionationURL: URL) {
         let fileName = sourceURL.lastPathComponent
         let sorter: MediaSortable? = {
-            if let videoSorter = VideoSorter(url: sourceURL) {
+            if let videoSorter = VideoSorter(url: sourceURL,
+                                             useFileCreationDate: useFileCreationDate) {
                 return videoSorter
-            } else if let photoSorter = PhotoSorter(url: sourceURL) {
+            } else if let photoSorter = PhotoSorter(url: sourceURL,
+                                                    useFileCreationDate: useFileCreationDate) {
                 return photoSorter
             }
             return nil
